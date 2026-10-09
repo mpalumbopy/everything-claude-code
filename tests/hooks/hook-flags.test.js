@@ -350,7 +350,7 @@ function runTests() {
   console.log('\ngetDisabledHookIds:');
 
   if (test('returns empty Set when env var not set', () => {
-    withEnv({ ECC_DISABLED_HOOKS: undefined }, () => {
+    withEnv({ ECC_DISABLED_HOOKS: undefined, CLAUDE_PLUGIN_OPTION_DISABLED_HOOKS: undefined }, () => {
       const result = getDisabledHookIds();
       assert.ok(result instanceof Set);
       assert.strictEqual(result.size, 0);
@@ -359,6 +359,27 @@ function runTests() {
 
   if (test('returns empty Set for empty string', () => {
     withEnv({ ECC_DISABLED_HOOKS: '' }, () => {
+      assert.strictEqual(getDisabledHookIds().size, 0);
+    });
+  })) passed++; else failed++;
+
+  if (test('uses the disabled_hooks plugin option when env var not set', () => {
+    withEnv({
+      ECC_DISABLED_HOOKS: undefined,
+      CLAUDE_PLUGIN_OPTION_DISABLED_HOOKS: 'pre:config-protection, pre:bash:auto-tmux-dev',
+    }, () => {
+      const result = getDisabledHookIds();
+      assert.ok(result.has('pre:config-protection'));
+      assert.ok(result.has('pre:bash:auto-tmux-dev'));
+      assert.strictEqual(isHookEnabled('pre:config-protection', { profiles: 'standard,strict' }), false);
+    });
+  })) passed++; else failed++;
+
+  if (test('explicit ECC_DISABLED_HOOKS overrides the plugin option, even when empty', () => {
+    withEnv({
+      ECC_DISABLED_HOOKS: '',
+      CLAUDE_PLUGIN_OPTION_DISABLED_HOOKS: 'pre:config-protection',
+    }, () => {
       assert.strictEqual(getDisabledHookIds().size, 0);
     });
   })) passed++; else failed++;

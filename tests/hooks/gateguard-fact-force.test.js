@@ -3091,6 +3091,56 @@ function runTests() {
     passed++;
   else failed++;
 
+  // --- Plugin option fallback for the routine Bash gate ---
+  clearState();
+  if (
+    test('gateguard_routine_bash_disabled plugin option skips routine bash gate', () => {
+      const input = { tool_name: 'Bash', tool_input: { command: 'ls -la' } };
+      const result = runBashHook(input, {
+        GATEGUARD_BASH_ROUTINE_DISABLED: undefined,
+        CLAUDE_PLUGIN_OPTION_GATEGUARD_ROUTINE_BASH_DISABLED: 'true',
+      });
+      assert.strictEqual(result.code, 0, 'exit code should be 0');
+      const output = parseOutput(result.stdout);
+      assert.ok(output, 'should produce valid JSON output');
+      assert.notStrictEqual(output.hookSpecificOutput?.permissionDecision, 'deny', 'routine bash should not be denied');
+    })
+  )
+    passed++;
+  else failed++;
+
+  clearState();
+  if (
+    test('gateguard_routine_bash_disabled plugin option keeps the destructive gate', () => {
+      const input = { tool_name: 'Bash', tool_input: { command: 'rm -rf /important/data' } };
+      const result = runBashHook(input, {
+        GATEGUARD_BASH_ROUTINE_DISABLED: undefined,
+        CLAUDE_PLUGIN_OPTION_GATEGUARD_ROUTINE_BASH_DISABLED: 'true',
+      });
+      const output = parseOutput(result.stdout);
+      assert.ok(output, 'should produce JSON');
+      assert.strictEqual(output.hookSpecificOutput.permissionDecision, 'deny', 'destructive gate must still fire');
+    })
+  )
+    passed++;
+  else failed++;
+
+  clearState();
+  if (
+    test('explicit GATEGUARD_BASH_ROUTINE_DISABLED=0 overrides the plugin option', () => {
+      const input = { tool_name: 'Bash', tool_input: { command: 'ls -la' } };
+      const result = runBashHook(input, {
+        GATEGUARD_BASH_ROUTINE_DISABLED: '0',
+        CLAUDE_PLUGIN_OPTION_GATEGUARD_ROUTINE_BASH_DISABLED: 'true',
+      });
+      const output = parseOutput(result.stdout);
+      assert.ok(output, 'should produce JSON');
+      assert.strictEqual(output.hookSpecificOutput.permissionDecision, 'deny', 'env var must win over the plugin option');
+    })
+  )
+    passed++;
+  else failed++;
+
   // --- Issue #2078: GATEGUARD_BASH_EXTRA_DESTRUCTIVE env var ---
   // Operators can register additional destructive patterns without
   // patching the bundled JS. Same matching scope as the built-in

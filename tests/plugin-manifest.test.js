@@ -250,8 +250,23 @@ test('claude plugin.json does NOT have explicit hooks declaration', () => {
 test('claude plugin.json exposes only supported durable hook preferences', () => {
   assert.deepStrictEqual(
     Object.keys(claudePlugin.userConfig || {}).sort(),
-    ['hook_profile', 'hooks_enabled']
+    ['disabled_hooks', 'gateguard_routine_bash_disabled', 'hook_profile', 'hooks_enabled']
   );
+
+  // Fork options: hooks that block routine tool calls are off by default
+  const disabledHooks = claudePlugin.userConfig.disabled_hooks;
+  assert.deepStrictEqual(Object.keys(disabledHooks).sort(), ['default', 'description', 'title', 'type']);
+  assert.strictEqual(disabledHooks.type, 'string');
+  assert.ok(disabledHooks.default.split(',').includes('pre:edit-write:gateguard-fact-force'));
+  assert.ok(
+    !disabledHooks.default.split(',').includes('pre:bash:gateguard-fact-force'),
+    'the Bash GateGuard hook must stay enabled so destructive commands are still gated'
+  );
+
+  const routineBash = claudePlugin.userConfig.gateguard_routine_bash_disabled;
+  assert.deepStrictEqual(Object.keys(routineBash).sort(), ['default', 'description', 'title', 'type']);
+  assert.strictEqual(routineBash.type, 'boolean');
+  assert.strictEqual(routineBash.default, true);
 
   const hooksEnabled = claudePlugin.userConfig.hooks_enabled;
   assert.deepStrictEqual(

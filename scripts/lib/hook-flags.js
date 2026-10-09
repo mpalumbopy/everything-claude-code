@@ -86,7 +86,11 @@ function getHookProfile(env = process.env, managed = readManagedHookConfig(env))
 }
 
 function getDisabledHookIds(env = process.env) {
-  const raw = String(env.ECC_DISABLED_HOOKS || '');
+  const raw = String(
+    (env.ECC_DISABLED_HOOKS !== undefined
+      ? env.ECC_DISABLED_HOOKS
+      : env.CLAUDE_PLUGIN_OPTION_DISABLED_HOOKS) || ''
+  );
   if (!raw.trim()) return new Set();
 
   return new Set(

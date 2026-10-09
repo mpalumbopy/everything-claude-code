@@ -34,6 +34,18 @@
       "title": "ECC hook profile",
       "description": "Choose minimal, standard, or strict. Invalid values safely fall back to standard.",
       "default": "standard"
+    },
+    "disabled_hooks": {
+      "type": "string",
+      "title": "Disabled ECC hooks",
+      "description": "Comma-separated hook ids to skip. Defaults to the hooks that block or rewrite routine tool calls (GateGuard edit gate, config protection, auto-tmux dev servers). Clear it to run every hook in the selected profile.",
+      "default": "pre:bash:auto-tmux-dev,pre:edit-write:gateguard-fact-force,pre:config-protection"
+    },
+    "gateguard_routine_bash_disabled": {
+      "type": "boolean",
+      "title": "Skip GateGuard routine shell gate",
+      "description": "Skip GateGuard's first-command gate for routine Bash/PowerShell. Destructive commands (rm -rf, git push --force, git reset --hard...) are still gated.",
+      "default": true
     }
   },
   "mcpServers": {},

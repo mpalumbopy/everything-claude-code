@@ -165,7 +165,11 @@ function isExemptPath(filePath, data) {
 }
 
 function isRoutineBashGateDisabled() {
-  return ECC_ENABLE_VALUES.has(normalizeEnvValue(process.env.GATEGUARD_BASH_ROUTINE_DISABLED));
+  // The plugin option is the fallback when the env var is unset
+  const raw = process.env.GATEGUARD_BASH_ROUTINE_DISABLED !== undefined
+    ? process.env.GATEGUARD_BASH_ROUTINE_DISABLED
+    : process.env.CLAUDE_PLUGIN_OPTION_GATEGUARD_ROUTINE_BASH_DISABLED;
+  return ECC_ENABLE_VALUES.has(normalizeEnvValue(raw));
 }
 
 /**
