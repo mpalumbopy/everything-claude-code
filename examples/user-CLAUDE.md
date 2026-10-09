@@ -35,6 +35,7 @@ Detailed guidelines are in `~/.claude/rules/`:
 | agents.md | Agent orchestration, when to use which agent |
 | patterns.md | API response, repository patterns |
 | performance.md | Model selection, context management |
+| hooks.md | Hooks System |
 
 ---
 
@@ -58,6 +59,10 @@ Located in `~/.claude/agents/`:
 
 ## Personal Preferences
 
+### Privacy
+- Always redact logs; never paste secrets (API keys/tokens/passwords/JWTs)
+- Review output before sharing - remove any sensitive data
+
 ### Code Style
 - No emojis in code, comments, or documentation
 - Prefer immutability - never mutate objects or arrays
@@ -73,6 +78,12 @@ Located in `~/.claude/agents/`:
 - TDD: Write tests first
 - 80% minimum coverage
 - Unit + integration + E2E for critical flows
+
+### Knowledge Capture
+- Personal debugging notes, preferences, and temporary context → auto memory
+- Team/project knowledge (architecture decisions, API changes, implementation runbooks) → follow the project's existing docs structure
+- If the current task already produces the relevant docs, comments, or examples, do not duplicate the same knowledge elsewhere
+- If there is no obvious project doc location, ask before creating a new top-level doc
 
 ---
 

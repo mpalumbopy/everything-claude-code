@@ -1,5 +1,5 @@
 ---
-description: Create or verify a checkpoint in your workflow.
+description: Create, verify, or list workflow checkpoints after running verification checks.
 ---
 
 # Checkpoint Command
