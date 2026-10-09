@@ -1,3 +1,7 @@
+---
+description: Incrementally fix TypeScript and build errors, one at a time.
+---
+
 # Build and Fix
 
 Incrementally fix TypeScript and build errors:

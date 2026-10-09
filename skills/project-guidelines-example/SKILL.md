@@ -1,3 +1,8 @@
+---
+name: project-guidelines-example
+description: Example template of a project-specific skill (architecture, conventions, testing and deployment guidelines). Copy and adapt it for your own project.
+---
+
 # Project Guidelines Skill (Example)
 
 This is an example of a project-specific skill. Use this as a template for your own projects.

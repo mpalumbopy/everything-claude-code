@@ -1,3 +1,7 @@
+---
+description: Manage the eval-driven development workflow: define, check and report evals.
+---
+
 # Eval Command
 
 Manage eval-driven development workflow.

@@ -1,3 +1,7 @@
+---
+description: Run comprehensive verification on the current codebase state.
+---
+
 # Verification Command
 
 Run comprehensive verification on current codebase state.
