@@ -14,7 +14,8 @@ const {
   getLearnedSkillsDir,
   findFiles,
   ensureDir,
-  log
+  log,
+  output
 } = require('../lib/utils');
 const { getPackageManager, getSelectionPrompt } = require('../lib/package-manager');
 
@@ -29,17 +30,19 @@ async function main() {
   // Check for recent session files (last 7 days)
   const recentSessions = findFiles(sessionsDir, '*.tmp', { maxAge: 7 });
 
+  // stdout from a SessionStart hook is added to Claude's context;
+  // stderr is not, so the session notes go to stdout
   if (recentSessions.length > 0) {
     const latest = recentSessions[0];
-    log(`[SessionStart] Found ${recentSessions.length} recent session(s)`);
-    log(`[SessionStart] Latest: ${latest.path}`);
+    output(`[SessionStart] Found ${recentSessions.length} recent session(s)`);
+    output(`[SessionStart] Latest: ${latest.path}`);
   }
 
   // Check for learned skills
   const learnedSkills = findFiles(learnedDir, '*.md');
 
   if (learnedSkills.length > 0) {
-    log(`[SessionStart] ${learnedSkills.length} learned skill(s) available in ${learnedDir}`);
+    output(`[SessionStart] ${learnedSkills.length} learned skill(s) available in ${learnedDir}`);
   }
 
   // Detect and report package manager

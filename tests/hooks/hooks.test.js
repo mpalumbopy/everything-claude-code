@@ -238,8 +238,117 @@ async function runTests() {
     cleanupTestDir(testDir);
   })) passed++; else failed++;
 
+  if (await asyncTest('reads transcript_path from stdin hook input', async () => {
+    const testDir = createTestDir();
+    const transcriptPath = path.join(testDir, 'transcript.jsonl');
+    fs.writeFileSync(transcriptPath, Array(12).fill('{"type":"user","content":"test"}\n').join(''));
+
+    const result = await runScript(
+      path.join(scriptsDir, 'evaluate-session.js'),
+      JSON.stringify({ transcript_path: transcriptPath }),
+      { CLAUDE_TRANSCRIPT_PATH: '' }
+    );
+
+    assert.ok(result.stderr.includes('12 messages'), 'Should read transcript_path from stdin');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  // suggest-compact.js stdin session id
+  console.log('\nsuggest-compact.js (stdin):');
+
+  if (await asyncTest('counts across calls using session_id from stdin', async () => {
+    const sessionId = 'stdin-session-' + Date.now();
+    const input = JSON.stringify({ session_id: sessionId });
+    const env = { CLAUDE_SESSION_ID: '' };
+    for (let i = 0; i < 3; i++) {
+      await runScript(path.join(scriptsDir, 'suggest-compact.js'), input, env);
+    }
+    const counterFile = path.join(os.tmpdir(), `claude-tool-count-${sessionId}`);
+    assert.strictEqual(fs.readFileSync(counterFile, 'utf8').trim(), '3');
+    fs.unlinkSync(counterFile);
+  })) passed++; else failed++;
+
+  // post-edit.js
+  console.log('\npost-edit.js:');
+
+  if (await asyncTest('warns about console.log in edited file', async () => {
+    const testDir = createTestDir();
+    const file = path.join(testDir, 'a.js');
+    fs.writeFileSync(file, 'console.log("x");\n');
+
+    const result = await runScript(
+      path.join(scriptsDir, 'post-edit.js'),
+      JSON.stringify({ tool_input: { file_path: file } })
+    );
+
+    assert.strictEqual(result.code, 0);
+    assert.ok(result.stderr.includes('console.log found'), 'Should warn about console.log');
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (await asyncTest('does not run shell commands from file names', async () => {
+    const testDir = createTestDir();
+    const markerName = `pwned-${Date.now()}`;
+    const markers = [path.join(testDir, markerName), path.join(process.cwd(), markerName)];
+    const file = path.join(testDir, `x$(touch ${markerName}).js`);
+    fs.writeFileSync(file, 'const a = 1;\n');
+
+    // Fake local prettier so the formatting step actually runs
+    const binDir = path.join(testDir, 'node_modules', '.bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    const fakePrettier = path.join(binDir, process.platform === 'win32' ? 'prettier.cmd' : 'prettier');
+    fs.writeFileSync(fakePrettier, process.platform === 'win32' ? '@exit /b 0\r\n' : '#!/bin/sh\nexit 0\n');
+    fs.chmodSync(fakePrettier, 0o755);
+
+    await runScript(
+      path.join(scriptsDir, 'post-edit.js'),
+      JSON.stringify({ tool_input: { file_path: file } })
+    );
+
+    for (const marker of markers) {
+      assert.ok(!fs.existsSync(marker), 'File name must not be interpreted by a shell');
+    }
+    cleanupTestDir(testDir);
+  })) passed++; else failed++;
+
+  if (await asyncTest('ignores non JS/TS files', async () => {
+    const result = await runScript(
+      path.join(scriptsDir, 'post-edit.js'),
+      JSON.stringify({ tool_input: { file_path: '/tmp/readme.md' } })
+    );
+    assert.strictEqual(result.code, 0);
+    assert.strictEqual(result.stderr, '');
+  })) passed++; else failed++;
+
+  // pr-created.js
+  console.log('\npr-created.js:');
+
+  if (await asyncTest('logs PR URL from tool_response', async () => {
+    const result = await runScript(
+      path.join(scriptsDir, 'pr-created.js'),
+      JSON.stringify({
+        tool_input: { command: 'gh pr create --fill' },
+        tool_response: { stdout: 'https://github.com/acme/app/pull/42\n' }
+      })
+    );
+    assert.ok(result.stderr.includes('gh pr review 42 --repo acme/app'));
+  })) passed++; else failed++;
+
   // hooks.json validation
   console.log('\nhooks.json Validation:');
+
+  if (test('matchers are tool names, not expressions', () => {
+    const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
+    const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+    for (const event of ['PreToolUse', 'PostToolUse']) {
+      for (const entry of hooks.hooks[event]) {
+        assert.ok(
+          /^[A-Za-z|]+$/.test(entry.matcher),
+          `${event} matcher should be a tool name list: ${entry.matcher}`
+        );
+      }
+    }
+  })) passed++; else failed++;
 
   if (test('hooks.json is valid JSON', () => {
     const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');

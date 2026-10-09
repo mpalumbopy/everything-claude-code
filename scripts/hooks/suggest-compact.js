@@ -19,14 +19,17 @@ const {
   getTempDir,
   readFile,
   writeFile,
+  readStdinJson,
   log
 } = require('../lib/utils');
 
 async function main() {
   // Track tool call count (increment in a temp file)
-  // Use a session-specific counter file based on PID from parent process
-  // or session ID from environment
-  const sessionId = process.env.CLAUDE_SESSION_ID || process.ppid || 'default';
+  // Use a session-specific counter file based on the session_id that
+  // Claude Code sends on stdin (the parent PID changes on every hook call)
+  const input = await readStdinJson().catch(() => ({}));
+  const rawSessionId = input.session_id || process.env.CLAUDE_SESSION_ID || 'default';
+  const sessionId = String(rawSessionId).replace(/[^A-Za-z0-9_-]/g, '_');
   const counterFile = path.join(getTempDir(), `claude-tool-count-${sessionId}`);
   const threshold = parseInt(process.env.COMPACT_THRESHOLD || '50', 10);
 

@@ -18,6 +18,7 @@ const {
   ensureDir,
   readFile,
   countInFile,
+  readStdinJson,
   log
 } = require('../lib/utils');
 
@@ -49,8 +50,9 @@ async function main() {
   // Ensure learned skills directory exists
   ensureDir(learnedSkillsPath);
 
-  // Get transcript path from environment (set by Claude Code)
-  const transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
+  // Claude Code sends transcript_path in the hook input on stdin
+  const input = await readStdinJson().catch(() => ({}));
+  const transcriptPath = input.transcript_path || process.env.CLAUDE_TRANSCRIPT_PATH;
 
   if (!transcriptPath || !fs.existsSync(transcriptPath)) {
     process.exit(0);
